@@ -39,7 +39,7 @@ export function ShapeList({ shapes, selectedId, onSelect, onMove, onDuplicate, o
           {confirming ? 'Click again to clear' : 'Clear all'}
         </button>
       </h2>
-      <p className="note">Drawn from top to bottom, so later shapes cover earlier ones.</p>
+      <p className="note">The top of the list is in front: each shape covers the ones below it.</p>
       {shapes.length === 0 ? (
         <div className="empty">
           <span>No shapes yet. Pick a tool on the left and draw on the screen.</span>
@@ -49,7 +49,8 @@ export function ShapeList({ shapes, selectedId, onSelect, onMove, onDuplicate, o
         </div>
       ) : (
         <div className="list" role="listbox" aria-label="Shapes">
-          {shapes.map((s, i) => (
+          {/* Shapes are stored back to front (drawing order); the list shows them front first. */}
+          {frontFirst(shapes).map(({ s, i }) => (
             <div
               key={s.id}
               className="row"
@@ -71,8 +72,14 @@ export function ShapeList({ shapes, selectedId, onSelect, onMove, onDuplicate, o
                 {s.guide && <span className="badge">Guide</span>}
               </span>
               <span className="row-actions" onClick={(e) => e.stopPropagation()}>
-                <RowButton text="↑" title="Draw earlier" name={s.name} disabled={i === 0} onClick={() => onMove(i, -1)} />
-                <RowButton text="↓" title="Draw later" name={s.name} disabled={i === shapes.length - 1} onClick={() => onMove(i, 1)} />
+                <RowButton
+                  text="↑"
+                  title="Bring forward"
+                  name={s.name}
+                  disabled={i === shapes.length - 1}
+                  onClick={() => onMove(i, 1)}
+                />
+                <RowButton text="↓" title="Send backward" name={s.name} disabled={i === 0} onClick={() => onMove(i, -1)} />
                 <RowButton text="⧉" title="Duplicate" name={s.name} onClick={() => onDuplicate(s.id)} />
                 <RowButton text="×" title="Delete" name={s.name} onClick={() => onDelete(s.id)} />
               </span>
@@ -82,6 +89,11 @@ export function ShapeList({ shapes, selectedId, onSelect, onMove, onDuplicate, o
       )}
     </section>
   )
+}
+
+/** The shapes with their drawing-order index, front-most first. */
+function frontFirst(shapes: Shape[]): { s: Shape; i: number }[] {
+  return shapes.map((s, i) => ({ s, i })).reverse()
 }
 
 interface RowButtonProps {

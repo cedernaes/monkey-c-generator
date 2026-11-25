@@ -25,6 +25,12 @@ afterEach(() => {
 })
 
 const rows = () => Array.from(container.querySelectorAll<HTMLElement>('.row'))
+const names = () => rows().map((r) => r.querySelector('.name')?.textContent)
+const row = (name: string) => {
+  const found = rows().find((r) => r.querySelector('.name')?.textContent === name)
+  if (!found) throw new Error(`No shape named ${name} in the list`)
+  return found
+}
 const code = () => container.querySelector('pre.code')?.textContent ?? ''
 const pressed = () => container.querySelector('.tool[aria-pressed="true"]')?.textContent ?? ''
 
@@ -38,13 +44,24 @@ describe('App', () => {
     expect(code()).not.toContain('Frame outline')
   })
 
+  it('lists the front-most shape first and brings shapes forward', async () => {
+    expect(names()[0]).toBe('Bell clapper (example)')
+    expect(names().at(-1)).toBe('Frame outline')
+
+    const forward = container.querySelector<HTMLButtonElement>('[aria-label="Bring forward: Bell (example)"]')
+    await act(async () => forward?.click())
+    expect(names()[0]).toBe('Bell (example)')
+    // The code still draws back to front, so the bell now comes after its clapper.
+    expect(code().indexOf('// Bell clapper')).toBeLessThan(code().indexOf('// Bell (example)'))
+  })
+
   it('shows the properties of the shape you pick', async () => {
-    await act(async () => rows()[7].click())
+    await act(async () => row('Bell (example)').click())
     expect(container.textContent).toContain('Points, one "x, y" per line')
   })
 
   it('changes a shape colour with the swatches', async () => {
-    await act(async () => rows()[3].click()) // Battery body (example), black
+    await act(async () => row('Battery body (example)').click()) // black
     const red = container.querySelector<HTMLButtonElement>('[role="radiogroup"][aria-label="Colour"] [aria-label="Red"]')
     await act(async () => red?.click())
     expect(red?.getAttribute('aria-checked')).toBe('true')
@@ -57,7 +74,7 @@ describe('App', () => {
   })
 
   it('deletes the selected shape and undoes it', async () => {
-    await act(async () => rows()[8].click())
+    await act(async () => row('Bell clapper (example)').click())
     await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete' })))
     expect(rows()).toHaveLength(8)
     await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true })))
