@@ -1,6 +1,6 @@
-import { PALETTE } from '../model/palette.ts'
 import type { ColorKey, Shape } from '../model/types.ts'
 import { shapeTypeName } from '../state/editor.ts'
+import { ColorPicker } from './ColorPicker.tsx'
 import { NumberField, PointsField, TextField } from './fields.tsx'
 
 interface FieldDef {
@@ -47,18 +47,6 @@ function fieldsOf(s: Shape): FieldDef[] {
   }
 }
 
-function ColorSelect({ value, onChange }: { value: ColorKey; onChange: (c: ColorKey) => void }) {
-  return (
-    <select value={value} onChange={(e) => onChange(e.target.value as ColorKey)}>
-      {PALETTE.map((c) => (
-        <option key={c.key} value={c.key}>
-          {c.label}
-        </option>
-      ))}
-    </select>
-  )
-}
-
 interface Props {
   shape: Shape | null
   newColor: ColorKey
@@ -74,10 +62,10 @@ export function PropertiesPanel({ shape, newColor, onNewColor, onChange, onCommi
       <section className="card" aria-labelledby="props-title">
         <h2 id="props-title">Properties</h2>
         <p className="note">Select a shape to edit its colour and exact coordinates.</p>
-        <label className="field">
+        <div className="field">
           Colour for new shapes
-          <ColorSelect value={newColor} onChange={onNewColor} />
-        </label>
+          <ColorPicker label="Colour for new shapes" value={newColor} onChange={onNewColor} />
+        </div>
       </section>
     )
   }
@@ -87,16 +75,17 @@ export function PropertiesPanel({ shape, newColor, onNewColor, onChange, onCommi
       <h2 id="props-title">{shapeTypeName(shape.type)}</h2>
       <div className="fields">
         <TextField wide label="Name" value={shape.name} onChange={(name) => onChange({ ...shape, name }, 'preview')} onCommit={onCommit} />
-        <label className="field">
+        <div className="field wide">
           Colour
-          <ColorSelect
+          <ColorPicker
+            label="Colour"
             value={shape.color}
             onChange={(color) => {
               onNewColor(color)
               onChange({ ...shape, color }, 'commit')
             }}
           />
-        </label>
+        </div>
         {fieldsOf(shape).map((f) => (
           <NumberField
             key={f.key}

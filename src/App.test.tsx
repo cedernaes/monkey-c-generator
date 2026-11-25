@@ -42,6 +42,14 @@ describe('App', () => {
     expect(container.textContent).toContain('Points, one "x, y" per line')
   })
 
+  it('changes a shape colour with the swatches', async () => {
+    await act(async () => rows()[3].click()) // Battery body (example), black
+    const red = container.querySelector<HTMLButtonElement>('[role="radiogroup"][aria-label="Colour"] [aria-label="Red"]')
+    await act(async () => red?.click())
+    expect(red?.getAttribute('aria-checked')).toBe('true')
+    expect(code()).toContain('dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);')
+  })
+
   it('switches tools with the keyboard', async () => {
     await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'p' })))
     expect(pressed()).toContain('Polygon')

@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
-import { PALETTE, presetFor, SCREEN_PRESETS, screenLabel } from '../model/palette.ts'
+import { presetFor, SCREEN_PRESETS, screenLabel } from '../model/palette.ts'
 import { SNAP_STEPS, ZOOM_LEVELS } from '../model/settings.ts'
-import type { ColorKey, Screen, ScreenShape, Settings } from '../model/types.ts'
+import type { Screen, ScreenShape, Settings } from '../model/types.ts'
+import { ColorMenu } from './ColorPicker.tsx'
 
 interface Props {
   screen: Screen
@@ -82,16 +83,14 @@ export function TopBar(props: Props) {
             ))}
           </select>
         </label>
-        <label className="ctl">
+        <div className="ctl">
           Background
-          <select value={settings.background} onChange={(e) => onSettings({ background: e.target.value as ColorKey })}>
-            {PALETTE.map((c) => (
-              <option key={c.key} value={c.key}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </label>
+          <ColorMenu
+            label="Background colour"
+            value={settings.background}
+            onChange={(background) => onSettings({ background })}
+          />
+        </div>
         <label className="check">
           <input type="checkbox" checked={settings.grid} onChange={(e) => onSettings({ grid: e.target.checked })} />
           Pixel grid
