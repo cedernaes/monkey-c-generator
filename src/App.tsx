@@ -314,7 +314,14 @@ export default function App() {
               select(id)
               chooseTool('select')
             }}
-            onReorder={(id, targetId, place) => setShapes(reorderShape(shapes, id, targetId, place))}
+            // Reorders start from the committed order, so previews don't pile up.
+            onPreviewOrder={(move) =>
+              setShapes(
+                move ? reorderShape(editor.committed, move.id, move.targetId, move.place) : editor.committed,
+                'preview',
+              )
+            }
+            onReorder={(id, targetId, place) => setShapes(reorderShape(editor.committed, id, targetId, place))}
             onDuplicate={duplicate}
             onDelete={removeShape}
             onClear={() => dispatch({ type: 'set', shapes: [], select: null })}

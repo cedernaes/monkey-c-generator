@@ -80,6 +80,22 @@ describe('App', () => {
     expect(names().at(-1)).toBe('Frame outline')
   })
 
+  it('previews the new order while dragging and puts it back when the drag is cancelled', async () => {
+    const bellFirst = () => code().indexOf('// Bell (example)') < code().indexOf('// Bell clapper')
+    expect(bellFirst()).toBe(true)
+
+    await act(async () => drag('dragstart', row('Bell (example)')))
+    await act(async () => drag('dragover', row('Bell clapper (example)'), -1))
+    // The drawing and code show the new order; the list keeps its order while dragging.
+    expect(bellFirst()).toBe(false)
+    expect(names()[0]).toBe('Bell clapper (example)')
+
+    // Letting go outside the list puts everything back, with no undo step.
+    await act(async () => drag('dragend', row('Bell (example)')))
+    expect(bellFirst()).toBe(true)
+    expect(container.querySelector<HTMLButtonElement>('button[title^="Undo"]')?.disabled).toBe(true)
+  })
+
   it('deselects when clicking an empty part of the page', async () => {
     const pointerDown = (selector: string) => {
       const target = container.querySelector(selector)

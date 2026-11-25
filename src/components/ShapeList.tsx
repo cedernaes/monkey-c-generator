@@ -11,6 +11,9 @@ interface Props {
   shapes: Shape[]
   selectedId: number | null
   onSelect: (id: number) => void
+  /** Show the order a drop here would give, without keeping it; null puts the order back. */
+  onPreviewOrder: (move: { id: number; targetId: number; place: Place } | null) => void
+  /** Keep the new order. */
   onReorder: (id: number, targetId: number, place: Place) => void
   onDuplicate: (id: number) => void
   onDelete: (id: number) => void
@@ -32,9 +35,20 @@ export function ShapeList(props: Props) {
   const timer = useRef<number | undefined>(undefined)
   useEffect(() => () => window.clearTimeout(timer.current), [])
 
-  // Drag and drop: which row is being dragged, and where it would land.
+  // Drag and drop: which row is being dragged, and where it would land. The
+  // drawing previews the new order, but the list keeps the order the drag
+  // started with, so rows don't move under the pointer.
   const [dragId, setDragId] = useState<number | null>(null)
   const [drop, setDrop] = useState<{ id: number; place: Place } | null>(null)
+  const [frozen, setFrozen] = useState<Shape[] | null>(null)
+  const dropped = useRef(false)
+  const listed = frozen ?? shapes
+
+  function hover(targetId: number, place: Place) {
+    if (dragId === null || (drop?.id === targetId && drop.place === place)) return
+    setDrop({ id: targetId, place })
+    props.onPreviewOrder({ id: dragId, targetId, place })
+  }
 
   function clickClear() {
     if (!confirming) {
@@ -50,6 +64,7 @@ export function ShapeList(props: Props) {
   function endDrag() {
     setDragId(null)
     setDrop(null)
+    setFrozen(null)
   }
 
   return (
@@ -74,11 +89,14 @@ export function ShapeList(props: Props) {
           role="listbox"
           aria-label="Shapes"
           onDragLeave={(e) => {
-            if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDrop(null)
+            // Out of the list: show the original order until it comes back.
+            if (dragId === null || e.currentTarget.contains(e.relatedTarget as Node | null)) return
+            setDrop(null)
+            props.onPreviewOrder(null)
           }}
         >
           {/* Shapes are stored back to front (drawing order); the list shows them front first. */}
-          {[...shapes].reverse().map((s) => (
+          {[...listed].reverse().map((s) => (
             <div
               key={s.id}
               className="row"
@@ -97,6 +115,8 @@ export function ShapeList(props: Props) {
               }}
               onDragStart={(e) => {
                 setDragId(s.id)
+                setFrozen(shapes)
+                dropped.current = false
                 if (e.dataTransfer) {
                   e.dataTransfer.effectAllowed = 'move'
                   e.dataTransfer.setData('text/plain', s.name) // Firefox only drags with data set
@@ -106,16 +126,20 @@ export function ShapeList(props: Props) {
                 if (dragId === null) return // something else, such as a file
                 e.preventDefault()
                 if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
-                const place = placeOver(e)
-                if (drop?.id !== s.id || drop.place !== place) setDrop({ id: s.id, place })
+                hover(s.id, placeOver(e))
               }}
               onDrop={(e) => {
                 if (dragId === null) return
                 e.preventDefault()
+                dropped.current = true
                 props.onReorder(dragId, s.id, placeOver(e))
                 endDrag()
               }}
-              onDragEnd={endDrag}
+              onDragEnd={() => {
+                // Let go anywhere but on the list (or pressed Esc): undo the preview.
+                if (!dropped.current) props.onPreviewOrder(null)
+                endDrag()
+              }}
             >
               <span className="grip" aria-hidden="true" />
               <span className="swatch" style={{ background: HEX[s.color] }} />
