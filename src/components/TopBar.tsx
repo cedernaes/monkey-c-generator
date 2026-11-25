@@ -40,6 +40,10 @@ export function TopBar(props: Props) {
             Source (AGPL-3.0)
           </a>
         </span>
+        <p className="privacy">
+          Private: everything runs in your browser. Nothing you draw or load is sent to a server, and your drawing is
+          only saved in this browser.
+        </p>
       </div>
 
       <div className="controls">

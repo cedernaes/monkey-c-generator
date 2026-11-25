@@ -31,6 +31,7 @@ const pressed = () => container.querySelector('.tool[aria-pressed="true"]')?.tex
 describe('App', () => {
   it('opens with the example shapes and their code', () => {
     expect(container.querySelector('h1')?.textContent).toBe('Watch Shape Editor')
+    expect(container.querySelector('.privacy')?.textContent).toContain('Nothing you draw or load is sent to a server')
     expect(rows()).toHaveLength(9)
     expect(code()).toContain('dc.fillPolygon([')
     // The frame shapes are guides, so they are not in the code.

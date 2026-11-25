@@ -43,6 +43,13 @@ rectangular screen. What you draw becomes `fillPolygon`, `fillRectangle`,
 The pixel preview is close to what a watch draws but not guaranteed to match
 every edge pixel. Check the final result in the Connect IQ simulator.
 
+## Privacy
+
+The editor runs entirely in your browser. Nothing you draw and no image you
+load is sent to a server. Your drawing and settings are kept in your browser's
+local storage; reference images aren't saved at all. **Save** and **Open** read
+and write files on your own computer.
+
 ## Development
 
 Needs Node.js 22.12 or newer.
