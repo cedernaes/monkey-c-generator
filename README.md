@@ -98,6 +98,4 @@ GitHub Actions**.
 
 ## License
 
-[GNU Affero General Public License v3.0](LICENSE). If you run a modified version
-for others to use over a network, the license asks you to offer them its source
-code. The app links to its source in the header.
+[AGPL v3.0](LICENSE).
