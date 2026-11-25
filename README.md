@@ -1,5 +1,7 @@
 # Watch Shape Editor
 
+[![CI](https://github.com/cedernaes/monkey-c-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/cedernaes/monkey-c-generator/actions/workflows/ci.yml)
+
 Draw icons and other shapes for Garmin Connect IQ watch faces, and copy them as
 Monkey C drawing calls.
 
@@ -67,6 +69,7 @@ npm run dev        # http://localhost:5173
 | `npm test`         | Run the unit and smoke tests once (Vitest) |
 | `npm run test:watch` | Run the tests on every change            |
 | `npm run lint`     | Lint with oxlint                           |
+| `npm run typecheck` | Type-check with TypeScript                |
 | `npm run build`    | Type-check and build into `dist/`          |
 | `npm run preview`  | Serve the built app                        |
 
@@ -83,12 +86,12 @@ src/
   App.tsx       Wires state, keyboard shortcuts and panels together
 ```
 
-## Deployment
+## CI and deployment
 
-Every push to `main` runs `.github/workflows/deploy.yml`. It runs lint and the
-tests, builds the app, and publishes it to GitHub Pages at
-`https://<user>.github.io/<repo>/`. The workflow sets Vite's base path to the
-repository name.
+`.github/workflows/ci.yml` lints, type-checks, tests and builds every push and
+pull request. For pushes to `main`, it then publishes the build to GitHub Pages
+at `https://<user>.github.io/<repo>/`, or the owner's custom domain. The
+workflow sets Vite's base path to the repository name.
 
 The repository needs Pages enabled once, with **Settings → Pages → Source:
 GitHub Actions**.
