@@ -8,7 +8,7 @@
     "type": "git",
     "url": "git+https://github.com/cedernaes/monkey-c-generator.git"
   },
-  "homepage": "https://cedernaes.github.io/monkey-c-generator/",
+  "homepage": "https://cedernaes.com/monkey-c-generator/",
   "type": "module",
   "scripts": {
     "dev": "vite",

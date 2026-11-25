@@ -3,7 +3,7 @@
 Draw icons and other shapes for Garmin Connect IQ watch faces, and copy them as
 Monkey C drawing calls.
 
-**Use it at <https://cedernaes.github.io/monkey-c-generator/>**
+**Use it at <https://cedernaes.com/monkey-c-generator/>**
 
 Watches draw without anti-aliasing, so the editor shows your shapes on the
 watch's own pixel grid, inside the outline of a round, semi-round or
