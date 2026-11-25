@@ -113,13 +113,6 @@ export default function App() {
     dispatch({ type: 'set', shapes: next, select: copy.id })
   }
 
-  function moveInList(index: number, delta: -1 | 1) {
-    const next = [...shapes]
-    const [s] = next.splice(index, 1)
-    next.splice(index + delta, 0, s)
-    setShapes(next)
-  }
-
   function changeScreen(next: Screen) {
     setScreen(next)
     updateSettings({ zoom: fitZoom(next) })
@@ -321,7 +314,6 @@ export default function App() {
               select(id)
               chooseTool('select')
             }}
-            onMove={moveInList}
             onReorder={(id, targetId, place) => setShapes(reorderShape(shapes, id, targetId, place))}
             onDuplicate={duplicate}
             onDelete={removeShape}

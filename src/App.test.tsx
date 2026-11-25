@@ -34,6 +34,17 @@ const row = (name: string) => {
 const code = () => container.querySelector('pre.code')?.textContent ?? ''
 const pressed = () => container.querySelector('.tool[aria-pressed="true"]')?.textContent ?? ''
 
+// jsdom has no real drag and drop, so drag events are sent by hand. Its rows
+// have no size, so clientY -1 is the top half of a row and 1 the bottom half.
+function drag(type: string, target: Element, clientY = 0) {
+  const event = new Event(type, { bubbles: true, cancelable: true })
+  Object.defineProperties(event, {
+    clientY: { value: clientY },
+    dataTransfer: { value: { setData: () => {}, effectAllowed: 'all', dropEffect: 'none' } },
+  })
+  target.dispatchEvent(event)
+}
+
 describe('App', () => {
   it('opens with the example shapes and their code', () => {
     expect(container.querySelector('h1')?.textContent).toBe('Watch Shape Editor')
@@ -44,29 +55,19 @@ describe('App', () => {
     expect(code()).not.toContain('Frame outline')
   })
 
-  it('lists the front-most shape first and brings shapes forward', async () => {
+  it('lists the front-most shape first and keeps the code back to front', async () => {
     expect(names()[0]).toBe('Bell clapper (example)')
     expect(names().at(-1)).toBe('Frame outline')
+    expect(container.querySelector('[title="Bring forward"], [title="Send backward"]')).toBeNull()
 
-    const forward = container.querySelector<HTMLButtonElement>('[aria-label="Bring forward: Bell (example)"]')
-    await act(async () => forward?.click())
+    await act(async () => drag('dragstart', row('Bell (example)')))
+    await act(async () => drag('drop', row('Bell clapper (example)'), -1))
     expect(names()[0]).toBe('Bell (example)')
-    // The code still draws back to front, so the bell now comes after its clapper.
+    // The bell is now in front, so the code draws it after its clapper.
     expect(code().indexOf('// Bell clapper')).toBeLessThan(code().indexOf('// Bell (example)'))
   })
 
   it('reorders shapes by dragging them in the list', async () => {
-    // jsdom has no real drag and drop, so send the events by hand. Its rows
-    // have no size, so clientY -1 is the top half of a row and 1 the bottom.
-    const drag = (type: string, target: Element, clientY = 0) => {
-      const event = new Event(type, { bubbles: true, cancelable: true })
-      Object.defineProperties(event, {
-        clientY: { value: clientY },
-        dataTransfer: { value: { setData: () => {}, effectAllowed: 'all', dropEffect: 'none' } },
-      })
-      target.dispatchEvent(event)
-    }
-
     await act(async () => drag('dragstart', row('Frame outline')))
     await act(async () => drag('dragover', row('Bell clapper (example)'), -1))
     expect(row('Bell clapper (example)').dataset.drop).toBe('front')

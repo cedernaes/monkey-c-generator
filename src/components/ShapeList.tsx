@@ -11,7 +11,6 @@ interface Props {
   shapes: Shape[]
   selectedId: number | null
   onSelect: (id: number) => void
-  onMove: (index: number, delta: -1 | 1) => void
   onReorder: (id: number, targetId: number, place: Place) => void
   onDuplicate: (id: number) => void
   onDelete: (id: number) => void
@@ -26,7 +25,7 @@ function placeOver(e: DragEvent<HTMLElement>): Place {
 }
 
 export function ShapeList(props: Props) {
-  const { shapes, selectedId, onSelect, onMove, onDuplicate, onDelete } = props
+  const { shapes, selectedId, onSelect, onDuplicate, onDelete } = props
 
   // "Clear all" asks for a second click within 3 seconds.
   const [confirming, setConfirming] = useState(false)
@@ -79,7 +78,7 @@ export function ShapeList(props: Props) {
           }}
         >
           {/* Shapes are stored back to front (drawing order); the list shows them front first. */}
-          {frontFirst(shapes).map(({ s, i }) => (
+          {[...shapes].reverse().map((s) => (
             <div
               key={s.id}
               className="row"
@@ -126,14 +125,6 @@ export function ShapeList(props: Props) {
                 {s.guide && <span className="badge">Guide</span>}
               </span>
               <span className="row-actions" onClick={(e) => e.stopPropagation()}>
-                <RowButton
-                  text="↑"
-                  title="Bring forward"
-                  name={s.name}
-                  disabled={i === shapes.length - 1}
-                  onClick={() => onMove(i, 1)}
-                />
-                <RowButton text="↓" title="Send backward" name={s.name} disabled={i === 0} onClick={() => onMove(i, -1)} />
                 <RowButton text="⧉" title="Duplicate" name={s.name} onClick={() => onDuplicate(s.id)} />
                 <RowButton text="×" title="Delete" name={s.name} onClick={() => onDelete(s.id)} />
               </span>
@@ -143,11 +134,6 @@ export function ShapeList(props: Props) {
       )}
     </section>
   )
-}
-
-/** The shapes with their drawing-order index, front-most first. */
-function frontFirst(shapes: Shape[]): { s: Shape; i: number }[] {
-  return shapes.map((s, i) => ({ s, i })).reverse()
 }
 
 interface RowButtonProps {
