@@ -1,6 +1,14 @@
 import { handlesOf, normRect } from '../model/geometry.ts'
 import { HEX } from '../model/palette.ts'
+import { fullRect, refHandles } from '../model/reference.ts'
+import type { Placement, RefEditMode } from '../model/reference.ts'
 import type { ColorKey, Point, Screen, Shape } from '../model/types.ts'
+
+/** A loaded reference image and where it sits on the design grid. */
+export interface SceneReference {
+  image: HTMLImageElement
+  placement: Placement
+}
 
 /** Design units shown around the screen, so shapes can reach past its edge. */
 export const MARGIN = 10
@@ -50,8 +58,11 @@ export interface Scene {
   background: ColorKey
   /** The shapes rasterised at one pixel per design unit. */
   layer: CanvasImageSource
-  refImage: HTMLImageElement | null
+  reference: SceneReference | null
   refOpacity: number
+  refOnTop: boolean
+  /** Set while the reference image is being adjusted. */
+  refEdit: RefEditMode | null
   grid: boolean
   selected: Shape | null
   draft: Point[] | null
@@ -70,15 +81,15 @@ export function drawScene(ctx: CanvasRenderingContext2D, scene: Scene): void {
   ctx.clearRect(0, 0, width, height)
   ctx.fillStyle = HEX[scene.background]
   ctx.fillRect(x0, y0, w, h)
-  if (scene.refImage) {
-    ctx.save()
-    ctx.globalAlpha = scene.refOpacity
-    ctx.imageSmoothingEnabled = true
-    ctx.drawImage(scene.refImage, x0, y0, w, h)
-    ctx.restore()
-  }
+
+  // The reference image goes under the shapes, or over them when asked and
+  // while it is being adjusted.
+  const ref = scene.reference
+  const refAbove = scene.refOnTop || scene.refEdit !== null
+  if (ref && !refAbove) drawReference(ctx, ref, zoom, scene.refOpacity, scene.refEdit)
   ctx.imageSmoothingEnabled = false
   ctx.drawImage(scene.layer, x0, y0, w, h)
+  if (ref && refAbove) drawReference(ctx, ref, zoom, scene.refOpacity, scene.refEdit)
 
   // Dim everything outside the screen: the watch can't show it.
   const outline = screenPath(screen, zoom)
@@ -93,6 +104,57 @@ export function drawScene(ctx: CanvasRenderingContext2D, scene: Scene): void {
 
   if (scene.grid && zoom >= 4) drawGrid(ctx, screen, zoom)
   drawOverlay(ctx, scene)
+  if (ref && scene.refEdit) drawReferenceFrame(ctx, ref.placement, zoom, scene.refEdit)
+}
+
+function drawReference(
+  ctx: CanvasRenderingContext2D,
+  ref: SceneReference,
+  zoom: number,
+  alpha: number,
+  edit: RefEditMode | null,
+): void {
+  const { image, placement: p } = ref
+  const iw = image.naturalWidth
+  const ih = image.naturalHeight
+  ctx.save()
+  ctx.imageSmoothingEnabled = true
+  if (edit === 'crop') {
+    // Show what is cropped away faintly, so it can be brought back.
+    const full = fullRect(p)
+    ctx.globalAlpha = alpha * 0.3
+    ctx.drawImage(image, toView(full.x, zoom), toView(full.y, zoom), full.w * zoom, full.h * zoom)
+  }
+  ctx.globalAlpha = alpha
+  ctx.drawImage(
+    image,
+    p.crop.x0 * iw,
+    p.crop.y0 * ih,
+    (p.crop.x1 - p.crop.x0) * iw,
+    (p.crop.y1 - p.crop.y0) * ih,
+    toView(p.x, zoom),
+    toView(p.y, zoom),
+    p.w * zoom,
+    p.h * zoom,
+  )
+  ctx.restore()
+}
+
+function drawReferenceFrame(ctx: CanvasRenderingContext2D, p: Placement, zoom: number, mode: RefEditMode): void {
+  const v = (n: number) => toView(n, zoom)
+  ctx.save()
+  ctx.lineWidth = 1.5
+  ctx.strokeStyle = OVERLAY
+  if (mode === 'crop') {
+    const full = fullRect(p)
+    ctx.setLineDash([2, 3])
+    ctx.strokeRect(v(full.x), v(full.y), full.w * zoom, full.h * zoom)
+  }
+  ctx.setLineDash([6, 3])
+  ctx.strokeRect(v(p.x), v(p.y), p.w * zoom, p.h * zoom)
+  ctx.setLineDash([])
+  for (const h of refHandles(p, mode)) drawHandle(ctx, v(h.x), v(h.y), false)
+  ctx.restore()
 }
 
 function drawGrid(ctx: CanvasRenderingContext2D, screen: Screen, zoom: number): void {

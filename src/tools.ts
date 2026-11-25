@@ -1,3 +1,4 @@
+import type { RefEditMode } from './model/reference.ts'
 import type { Tool } from './model/types.ts'
 
 export interface ToolInfo {
@@ -38,4 +39,9 @@ export function toolForKey(key: string): Tool | undefined {
 
 export function hintFor(tool: Tool): string {
   return TOOLS.find((t) => t.tool === tool)?.hint ?? ''
+}
+
+export const REF_EDIT_HINTS: Record<RefEditMode, string> = {
+  move: 'Drag the image to move it and drag a corner to resize it (hold Shift to stretch). Arrow keys nudge it. Press Esc when done.',
+  crop: 'Drag an edge or corner to crop the image. Press Esc when done.',
 }

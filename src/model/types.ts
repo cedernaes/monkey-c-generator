@@ -98,6 +98,8 @@ export interface Settings {
   background: ColorKey
   newColor: ColorKey
   refOpacity: number
+  /** Draw the reference image above the shapes instead of under them. */
+  refOnTop: boolean
   codeMode: CodeMode
   codeScope: 'all' | 'selected'
   colours: boolean

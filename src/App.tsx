@@ -2,19 +2,23 @@ import { useEffect, useReducer, useState } from 'react'
 import { CodePanel } from './components/CodePanel.tsx'
 import { EditorCanvas } from './components/EditorCanvas.tsx'
 import { PropertiesPanel } from './components/PropertiesPanel.tsx'
+import { ReferencePanel } from './components/ReferencePanel.tsx'
 import { ShapeList } from './components/ShapeList.tsx'
-import { ReferencePanel, ToolRail } from './components/ToolRail.tsx'
+import { ToolRail } from './components/ToolRail.tsx'
 import { TopBar } from './components/TopBar.tsx'
 import { parseDocument, serializeDocument } from './model/document.ts'
 import { coordWidth, formatCoord, moveShape } from './model/geometry.ts'
+import { fitPlacement, movePlacement, uncrop } from './model/reference.ts'
+import type { RefEditMode } from './model/reference.ts'
 import { sampleDocument } from './model/samples.ts'
 import { fitZoom } from './model/settings.ts'
 import type { Drawable, Point, Screen, Settings, Shape, Tool } from './model/types.ts'
 import { MARGIN } from './render/scene.ts'
+import type { SceneReference } from './render/scene.ts'
 import { editorReducer, initEditor, nextShapeId, nextShapeName, replaceShape } from './state/editor.ts'
 import { downloadText, loadImage } from './state/files.ts'
 import { loadDocument, loadSettings, saveDocument, saveSettings } from './state/storage.ts'
-import { hintFor, toolForKey } from './tools.ts'
+import { hintFor, REF_EDIT_HINTS, toolForKey } from './tools.ts'
 
 const ARROWS: Record<string, Point> = {
   ArrowLeft: [-1, 0],
@@ -31,7 +35,8 @@ export default function App() {
   const [tool, setTool] = useState<Tool>('select')
   const [draft, setDraft] = useState<Point[] | null>(null)
   const [cursor, setCursor] = useState<Point | null>(null)
-  const [refImage, setRefImage] = useState<HTMLImageElement | null>(null)
+  const [reference, setReference] = useState<SceneReference | null>(null)
+  const [refEdit, setRefEdit] = useState<RefEditMode | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
   const { shapes, selectedId } = editor
@@ -57,7 +62,21 @@ export default function App() {
 
   function chooseTool(next: Tool) {
     if (next !== 'polygon') setDraft(null)
+    setRefEdit(null)
     setTool(next)
+  }
+
+  /** Start or stop adjusting the reference image; null stops. */
+  function editReference(mode: RefEditMode | null) {
+    if (mode) {
+      setDraft(null)
+      setTool('select')
+    }
+    setRefEdit(mode)
+  }
+
+  function placeReference(change: (r: SceneReference) => SceneReference['placement']) {
+    if (reference) setReference({ ...reference, placement: change(reference) })
   }
 
   function addShape(shape: Drawable) {
@@ -116,7 +135,9 @@ export default function App() {
 
   async function pickReference(file: File) {
     try {
-      setRefImage(await loadImage(file))
+      const image = await loadImage(file)
+      setReference({ image, placement: fitPlacement(image.naturalWidth, image.naturalHeight, screen) })
+      setRefEdit(null)
     } catch (err) {
       setMessage(err instanceof Error ? err.message : String(err))
     }
@@ -140,6 +161,23 @@ export default function App() {
         return
       }
       if (mod || e.altKey) return
+
+      // While adjusting the reference image, keys act on the image.
+      if (refEdit) {
+        const dir = ARROWS[e.key]
+        const toolKey = toolForKey(e.key)
+        if (e.key === 'Escape' || e.key === 'Enter') {
+          e.preventDefault()
+          setRefEdit(null)
+        } else if (dir) {
+          e.preventDefault()
+          const step = (settings.snap || 1) * (e.shiftKey ? 10 : 1)
+          placeReference((r) => movePlacement(r.placement, dir[0] * step, dir[1] * step))
+        } else if (toolKey) {
+          chooseTool(toolKey)
+        }
+        return
+      }
 
       if (e.key === 'Escape') {
         if (draft) setDraft(null)
@@ -207,11 +245,22 @@ export default function App() {
         <div className="rail">
           <ToolRail tool={tool} onTool={chooseTool} />
           <ReferencePanel
-            hasImage={refImage !== null}
+            hasImage={reference !== null}
+            editMode={refEdit}
             opacity={settings.refOpacity}
+            onTop={settings.refOnTop}
             onPick={(file) => void pickReference(file)}
-            onRemove={() => setRefImage(null)}
+            onRemove={() => {
+              setReference(null)
+              setRefEdit(null)
+            }}
+            onEditMode={editReference}
+            onFit={() =>
+              placeReference((r) => fitPlacement(r.image.naturalWidth, r.image.naturalHeight, screen, r.placement.crop))
+            }
+            onUncrop={() => placeReference((r) => uncrop(r.placement))}
             onOpacity={(refOpacity) => updateSettings({ refOpacity })}
+            onOnTop={(refOnTop) => updateSettings({ refOnTop })}
           />
         </div>
 
@@ -229,8 +278,11 @@ export default function App() {
               newColor={settings.newColor}
               draft={draft}
               cursor={cursor}
-              refImage={refImage}
+              reference={reference}
               refOpacity={settings.refOpacity}
+              refOnTop={settings.refOnTop}
+              refEdit={reference ? refEdit : null}
+              onReference={(placement) => placeReference(() => placement)}
               onCursor={setCursor}
               onSelect={select}
               onShapes={setShapes}
@@ -242,7 +294,7 @@ export default function App() {
           </div>
           <div className="status">
             <span className="pos">{`x ${coord(cursor?.[0])} · y ${coord(cursor?.[1])}`}</span>
-            <span className="hint">{hintFor(tool)}</span>
+            <span className="hint">{refEdit && reference ? REF_EDIT_HINTS[refEdit] : hintFor(tool)}</span>
           </div>
         </section>
 

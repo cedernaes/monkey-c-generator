@@ -25,8 +25,11 @@ rectangular screen. What you draw becomes `fillPolygon`, `fillRectangle`,
   Snapping to 1 or 0.5 px.
 - **Guides:** shapes that are drawn in the editor but left out of the code, for
   showing the rest of your watch face while you draw.
-- **Reference image:** load or paste an image, such as a simulator screenshot,
-  to trace over.
+- **Reference image:**
+  - Load or paste an image, such as a simulator screenshot, to trace over.
+  - It stays locked in place while you draw.
+  - **Adjust image** lets you move, resize and crop it.
+  - It can be shown under or on top of the shapes.
 - **Code in three styles:**
   - **Design grid:** calls `gx()`/`gy()`/`sz()` helpers, so the shapes scale to
     other screens. The editor shows the helpers to paste into your view.

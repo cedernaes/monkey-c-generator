@@ -8,6 +8,7 @@ export const DEFAULT_SETTINGS: Settings = {
   background: 'BLACK',
   newColor: 'BLACK',
   refOpacity: 0.5,
+  refOnTop: false,
   codeMode: 'grid',
   codeScope: 'all',
   colours: true,
@@ -28,6 +29,7 @@ export function sanitizeSettings(value: unknown): Settings {
   if (isColorKey(v.background)) s.background = v.background
   if (isColorKey(v.newColor)) s.newColor = v.newColor
   if (typeof v.refOpacity === 'number' && v.refOpacity > 0 && v.refOpacity <= 1) s.refOpacity = v.refOpacity
+  if (typeof v.refOnTop === 'boolean') s.refOnTop = v.refOnTop
   if (v.codeMode === 'grid' || v.codeMode === 'px' || v.codeMode === 'fn') s.codeMode = v.codeMode
   if (v.codeScope === 'all' || v.codeScope === 'selected') s.codeScope = v.codeScope
   if (typeof v.colours === 'boolean') s.colours = v.colours

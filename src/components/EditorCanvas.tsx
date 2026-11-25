@@ -13,8 +13,11 @@ import {
 } from '../model/geometry.ts'
 import type { HandleKey } from '../model/geometry.ts'
 import { rasterize } from '../model/raster.ts'
+import { cropPlacement, hitRefHandle, movePlacement, placementContains, resizePlacement } from '../model/reference.ts'
+import type { Placement, RefEditMode, RefHandleKey } from '../model/reference.ts'
 import type { ColorKey, Drawable, Point, Screen, Shape, Tool } from '../model/types.ts'
 import { drawScene, fromView, viewSize } from '../render/scene.ts'
+import type { SceneReference } from '../render/scene.ts'
 import { replaceShape } from '../state/editor.ts'
 
 export interface EditorCanvasProps {
@@ -29,8 +32,12 @@ export interface EditorCanvasProps {
   newColor: ColorKey
   draft: Point[] | null
   cursor: Point | null
-  refImage: HTMLImageElement | null
+  reference: SceneReference | null
   refOpacity: number
+  refOnTop: boolean
+  /** While set, the pointer adjusts the reference image instead of the shapes. */
+  refEdit: RefEditMode | null
+  onReference: (placement: Placement) => void
   onCursor: (p: Point | null) => void
   onSelect: (id: number | null) => void
   /** 'preview' while dragging; 'commit' for a finished change. */
@@ -45,6 +52,19 @@ type Drag =
   | { kind: 'move'; start: Point; orig: Shape }
   | { kind: 'handle'; id: number; key: HandleKey; anchor: Point | null }
   | { kind: 'create'; type: 'rect' | 'rrect' | 'circle' | 'line'; start: Point }
+  | { kind: 'ref-move'; start: Point; orig: Placement }
+  | { kind: 'ref-handle'; key: RefHandleKey; orig: Placement }
+
+const RESIZE_CURSOR: Record<RefHandleKey, string> = {
+  tl: 'nwse-resize',
+  br: 'nwse-resize',
+  tr: 'nesw-resize',
+  bl: 'nesw-resize',
+  t: 'ns-resize',
+  b: 'ns-resize',
+  l: 'ew-resize',
+  r: 'ew-resize',
+}
 
 // Hit distances, in CSS pixels on screen
 const HANDLE_TOLERANCE = 7
@@ -52,7 +72,7 @@ const SHAPE_TOLERANCE = 4
 const EDGE_TOLERANCE = 6
 
 export function EditorCanvas(props: EditorCanvasProps) {
-  const { screen, shapes, selected, tool, zoom, snap, draft, cursor, newColor } = props
+  const { screen, shapes, selected, tool, zoom, snap, draft, cursor, newColor, reference, refEdit } = props
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const drag = useRef<Drag | null>(null)
   const [creating, setCreating] = useState<Drawable | null>(null)
@@ -100,13 +120,15 @@ export function EditorCanvas(props: EditorCanvasProps) {
       zoom,
       background: props.background,
       layer,
-      refImage: props.refImage,
+      reference,
       refOpacity: props.refOpacity,
+      refOnTop: props.refOnTop,
+      refEdit,
       grid: props.grid,
-      selected: tool === 'select' ? selected : null,
+      selected: tool === 'select' && !refEdit ? selected : null,
       draft,
       cursor,
-      showCursor: tool !== 'select',
+      showCursor: tool !== 'select' && !refEdit,
     })
   })
 
@@ -124,6 +146,16 @@ export function EditorCanvas(props: EditorCanvasProps) {
     const raw = toGrid(e)
     const p = snapPoint(raw)
     e.currentTarget.setPointerCapture(e.pointerId)
+
+    // Adjusting the reference image: the shapes are left alone.
+    if (refEdit) {
+      if (!reference) return
+      const placement = reference.placement
+      const handle = hitRefHandle(placement, refEdit, raw, tol(HANDLE_TOLERANCE))
+      if (handle) drag.current = { kind: 'ref-handle', key: handle.key, orig: placement }
+      else if (placementContains(placement, raw)) drag.current = { kind: 'ref-move', start: p, orig: placement }
+      return
+    }
 
     if (tool === 'select') {
       const handle = selected ? hitHandle(selected, raw, tol(HANDLE_TOLERANCE)) : null
@@ -172,9 +204,20 @@ export function EditorCanvas(props: EditorCanvasProps) {
       if (s) props.onShapes(replaceShape(shapes, applyHandle(s, d.key, d.anchor, p, snap)), 'preview')
     } else if (d?.kind === 'create') {
       setCreating(createShape(d.type, d.start, p, newColor, snap))
+    } else if (d?.kind === 'ref-move') {
+      props.onReference(movePlacement(d.orig, p[0] - d.start[0], p[1] - d.start[1]))
+    } else if (d?.kind === 'ref-handle') {
+      props.onReference(
+        refEdit === 'crop' ? cropPlacement(d.orig, d.key, p) : resizePlacement(d.orig, d.key, p, e.shiftKey),
+      )
     }
 
-    if (tool === 'select') {
+    if (refEdit && reference) {
+      if (d) return
+      const handle = hitRefHandle(reference.placement, refEdit, raw, tol(HANDLE_TOLERANCE))
+      if (handle) setHoverCursor(RESIZE_CURSOR[handle.key])
+      else setHoverCursor(placementContains(reference.placement, raw) ? 'move' : 'default')
+    } else if (tool === 'select') {
       if (d) setHoverCursor('grabbing')
       else if (selected && hitHandle(selected, raw, tol(HANDLE_TOLERANCE))) setHoverCursor('pointer')
       else if (hitTest(shapes, raw, tol(SHAPE_TOLERANCE))) setHoverCursor('move')
@@ -192,10 +235,13 @@ export function EditorCanvas(props: EditorCanvasProps) {
       if (shape && !isEmptyShape(shape)) props.onCreate(shape)
       return
     }
+    // The reference image isn't part of the drawing, so it has no undo steps.
+    if (d.kind === 'ref-move' || d.kind === 'ref-handle') return
     props.onCommit()
   }
 
   function onDoubleClick(e: ReactMouseEvent<HTMLCanvasElement>) {
+    if (refEdit) return
     const raw = toGrid(e)
     if (tool === 'polygon' && draft) {
       props.onFinishPolygon()
@@ -215,7 +261,7 @@ export function EditorCanvas(props: EditorCanvasProps) {
     <canvas
       ref={canvasRef}
       className="editor-canvas"
-      style={{ width, height, cursor: tool === 'select' ? hoverCursor : 'crosshair' }}
+      style={{ width, height, cursor: refEdit || tool === 'select' ? hoverCursor : 'crosshair' }}
       aria-label="Drawing area for the watch screen"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
