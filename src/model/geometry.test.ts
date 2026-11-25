@@ -1,10 +1,28 @@
 import { describe, expect, it } from 'vitest'
-import { anchorFor, applyHandle, bounds, hitTest, moveShape, parsePoints, snapTo } from './geometry.ts'
+import {
+  anchorFor,
+  applyHandle,
+  bounds,
+  coordWidth,
+  formatCoord,
+  hitTest,
+  moveShape,
+  parsePoints,
+  snapTo,
+} from './geometry.ts'
 import type { Shape } from './types.ts'
 
 const box: Shape = { id: 1, name: 'Box', color: 'BLACK', type: 'rect', x: 10, y: 10, w: 20, h: 10 }
 const dot: Shape = { id: 2, name: 'Dot', color: 'RED', type: 'circle', cx: 20, cy: 15, r: 3 }
 const tri: Shape = { id: 3, name: 'Tri', color: 'BLACK', type: 'polygon', points: [[0, 0], [4, 0], [0, 4]] }
+
+describe('formatCoord', () => {
+  it('always uses the same width', () => {
+    const width = coordWidth(225, 1)
+    const values = [5, 12.5, -10, 225, null].map((v) => formatCoord(v, 1, width))
+    expect(values).toEqual(['   5.0', '  12.5', ' -10.0', ' 225.0', '     –'])
+  })
+})
 
 describe('snapTo', () => {
   it('snaps to half pixels', () => {

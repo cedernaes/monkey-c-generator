@@ -254,7 +254,7 @@ textarea[aria-invalid='true'] {
 }
 
 .status .pos {
-  min-width: 12ch;
+  white-space: pre;
   font-variant-numeric: tabular-nums;
 }
 

@@ -6,10 +6,11 @@ import { ShapeList } from './components/ShapeList.tsx'
 import { ReferencePanel, ToolRail } from './components/ToolRail.tsx'
 import { TopBar } from './components/TopBar.tsx'
 import { parseDocument, serializeDocument } from './model/document.ts'
-import { fmt, moveShape } from './model/geometry.ts'
+import { coordWidth, formatCoord, moveShape } from './model/geometry.ts'
 import { sampleDocument } from './model/samples.ts'
 import { fitZoom } from './model/settings.ts'
 import type { Drawable, Point, Screen, Settings, Shape, Tool } from './model/types.ts'
+import { MARGIN } from './render/scene.ts'
 import { editorReducer, initEditor, nextShapeId, nextShapeName, replaceShape } from './state/editor.ts'
 import { downloadText, loadImage } from './state/files.ts'
 import { loadDocument, loadSettings, saveDocument, saveSettings } from './state/storage.ts'
@@ -35,6 +36,11 @@ export default function App() {
 
   const { shapes, selectedId } = editor
   const selected = shapes.find((s) => s.id === selectedId) ?? null
+
+  // Pointer readout: one decimal (two without snapping) in a fixed width, so it doesn't jump.
+  const decimals = settings.snap === 0 ? 2 : 1
+  const width = coordWidth(Math.max(screen.width, screen.height) + MARGIN, decimals)
+  const coord = (v: number | undefined) => formatCoord(v ?? null, decimals, width)
 
   useEffect(() => saveDocument({ screen, shapes: editor.committed }), [screen, editor.committed])
   useEffect(() => saveSettings(settings), [settings])
@@ -235,7 +241,7 @@ export default function App() {
             />
           </div>
           <div className="status">
-            <span className="pos">{cursor ? `x ${fmt(cursor[0])} · y ${fmt(cursor[1])}` : 'x – · y –'}</span>
+            <span className="pos">{`x ${coord(cursor?.[0])} · y ${coord(cursor?.[1])}`}</span>
             <span className="hint">{hintFor(tool)}</span>
           </div>
         </section>

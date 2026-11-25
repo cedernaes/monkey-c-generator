@@ -8,6 +8,19 @@ export function fmt(v: number): string {
   return String(Object.is(r, -0) ? 0 : r)
 }
 
+/**
+ * A coordinate for the pointer readout, right-aligned in a fixed width so the
+ * readout doesn't jump as the numbers change. null shows a dash.
+ */
+export function formatCoord(v: number | null, decimals: number, width: number): string {
+  return (v === null ? '–' : v.toFixed(decimals)).padStart(width)
+}
+
+/** Width that fits every coordinate on a screen of this size, including the margin and a minus sign. */
+export function coordWidth(maxValue: number, decimals: number): number {
+  return Math.ceil(maxValue).toFixed(decimals).length + 1
+}
+
 /** Snap to the nearest multiple of step. A step of 0 only rounds to 2 decimals. */
 export function snapTo(v: number, step: number): number {
   return step > 0 ? round2(Math.round(v / step) * step) : round2(v)
