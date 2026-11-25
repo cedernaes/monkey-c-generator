@@ -369,11 +369,12 @@ textarea[aria-invalid='true'] {
 }
 
 .row {
+  position: relative;
   display: grid;
-  grid-template-columns: 14px minmax(0, 1fr) auto;
+  grid-template-columns: 8px 14px minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
-  padding: 3px 4px 3px 6px;
+  padding: 3px 4px 3px 4px;
   border: 1px solid transparent;
   border-radius: 6px;
   cursor: pointer;
@@ -381,6 +382,44 @@ textarea[aria-invalid='true'] {
 
 .row:hover {
   border-color: var(--line);
+}
+
+/* Two columns of dots: the row can be dragged. */
+.grip {
+  width: 8px;
+  height: 14px;
+  color: var(--muted);
+  background-image: radial-gradient(currentColor 1px, transparent 1.3px);
+  background-size: 4px 4px;
+  cursor: grab;
+  opacity: 0.7;
+}
+
+.row:hover .grip {
+  opacity: 1;
+}
+
+.row[data-dragging='true'] {
+  opacity: 0.45;
+}
+
+/* Insertion line where a dragged shape would land. */
+.row[data-drop]::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+}
+
+.row[data-drop='front']::after {
+  top: -2px;
+}
+
+.row[data-drop='behind']::after {
+  bottom: -2px;
 }
 
 .row[aria-selected='true'] {

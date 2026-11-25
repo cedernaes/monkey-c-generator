@@ -15,7 +15,7 @@ import { fitZoom } from './model/settings.ts'
 import type { Drawable, Point, Screen, Settings, Shape, Tool } from './model/types.ts'
 import { MARGIN } from './render/scene.ts'
 import type { SceneReference } from './render/scene.ts'
-import { editorReducer, initEditor, nextShapeId, nextShapeName, replaceShape } from './state/editor.ts'
+import { editorReducer, initEditor, nextShapeId, nextShapeName, reorderShape, replaceShape } from './state/editor.ts'
 import { downloadText, loadImage } from './state/files.ts'
 import { loadDocument, loadSettings, saveDocument, saveSettings } from './state/storage.ts'
 import { hintFor, REF_EDIT_HINTS, toolForKey } from './tools.ts'
@@ -307,6 +307,7 @@ export default function App() {
               chooseTool('select')
             }}
             onMove={moveInList}
+            onReorder={(id, targetId, place) => setShapes(reorderShape(shapes, id, targetId, place))}
             onDuplicate={duplicate}
             onDelete={removeShape}
             onClear={() => dispatch({ type: 'set', shapes: [], select: null })}

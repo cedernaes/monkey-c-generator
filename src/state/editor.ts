@@ -111,3 +111,17 @@ export function nextShapeName(shapes: readonly Shape[], type: ShapeType): string
 export function replaceShape(shapes: readonly Shape[], shape: Shape): Shape[] {
   return shapes.map((s) => (s.id === shape.id ? shape : s))
 }
+
+/**
+ * Move shape `id` to sit just in front of or just behind shape `targetId`.
+ * Shapes are in drawing order, so "in front" means drawn right after it.
+ */
+export function reorderShape(shapes: readonly Shape[], id: number, targetId: number, place: 'front' | 'behind'): Shape[] {
+  const moving = shapes.find((s) => s.id === id)
+  if (!moving || id === targetId) return [...shapes]
+  const rest = shapes.filter((s) => s.id !== id)
+  const target = rest.findIndex((s) => s.id === targetId)
+  if (target < 0) return [...shapes]
+  rest.splice(place === 'front' ? target + 1 : target, 0, moving)
+  return rest
+}

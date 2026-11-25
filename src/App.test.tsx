@@ -55,6 +55,30 @@ describe('App', () => {
     expect(code().indexOf('// Bell clapper')).toBeLessThan(code().indexOf('// Bell (example)'))
   })
 
+  it('reorders shapes by dragging them in the list', async () => {
+    // jsdom has no real drag and drop, so send the events by hand. Its rows
+    // have no size, so clientY -1 is the top half of a row and 1 the bottom.
+    const drag = (type: string, target: Element, clientY = 0) => {
+      const event = new Event(type, { bubbles: true, cancelable: true })
+      Object.defineProperties(event, {
+        clientY: { value: clientY },
+        dataTransfer: { value: { setData: () => {}, effectAllowed: 'all', dropEffect: 'none' } },
+      })
+      target.dispatchEvent(event)
+    }
+
+    await act(async () => drag('dragstart', row('Frame outline')))
+    await act(async () => drag('dragover', row('Bell clapper (example)'), -1))
+    expect(row('Bell clapper (example)').dataset.drop).toBe('front')
+    await act(async () => drag('drop', row('Bell clapper (example)'), -1))
+    expect(names()[0]).toBe('Frame outline')
+
+    // Dropping on the bottom half of the bottom row sends it all the way back.
+    await act(async () => drag('dragstart', row('Frame outline')))
+    await act(async () => drag('drop', row('Frame gap'), 1))
+    expect(names().at(-1)).toBe('Frame outline')
+  })
+
   it('shows the properties of the shape you pick', async () => {
     await act(async () => row('Bell (example)').click())
     expect(container.textContent).toContain('Points, one "x, y" per line')

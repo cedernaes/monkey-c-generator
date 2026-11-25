@@ -20,6 +20,8 @@ rectangular screen. What you draw becomes `fillPolygon`, `fillRectangle`,
     remove it.
   - The properties panel has number fields for exact positions.
   - Arrow keys nudge the selected shape; hold Shift for 10× the step.
+  - The shape list works like layers, with the front shape at the top. Drag
+    shapes in it to reorder them.
   - Undo and redo.
 - **Screens:** presets for common screen sizes, or a custom size and shape.
   Snapping to 1 or 0.5 px.
