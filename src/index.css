@@ -90,6 +90,14 @@ body {
   font-size: 12px;
 }
 
+.bar .sub a {
+  color: inherit;
+}
+
+.bar .sub a:hover {
+  color: var(--accent);
+}
+
 .controls {
   display: flex;
   flex-wrap: wrap;

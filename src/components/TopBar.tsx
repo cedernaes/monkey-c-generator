@@ -19,6 +19,9 @@ interface Props {
 
 const CUSTOM = 'custom'
 
+/** The AGPL asks that people using the app over a network can get its source. */
+const SOURCE_URL = 'https://github.com/cedernaes/monkey-c-generator'
+
 export function TopBar(props: Props) {
   const { screen, settings, onSettings } = props
   const fileInput = useRef<HTMLInputElement>(null)
@@ -31,7 +34,10 @@ export function TopBar(props: Props) {
       <div className="title">
         <h1>Watch Shape Editor</h1>
         <span className="sub">
-          {screenLabel(screen)} design grid · 1 unit = 1 px
+          {screenLabel(screen)} design grid · 1 unit = 1 px ·{' '}
+          <a href={SOURCE_URL} target="_blank" rel="noreferrer">
+            Source (AGPL-3.0)
+          </a>
         </span>
       </div>
 

@@ -3,6 +3,8 @@
 Draw icons and other shapes for Garmin Connect IQ watch faces, and copy them as
 Monkey C drawing calls.
 
+**Use it at <https://cedernaes.github.io/monkey-c-generator/>**
+
 Watches draw without anti-aliasing, so the editor shows your shapes on the
 watch's own pixel grid, inside the outline of a round, semi-round or
 rectangular screen. What you draw becomes `fillPolygon`, `fillRectangle`,
@@ -78,3 +80,9 @@ repository name.
 
 The repository needs Pages enabled once, with **Settings → Pages → Source:
 GitHub Actions**.
+
+## License
+
+[GNU Affero General Public License v3.0](LICENSE). If you run a modified version
+for others to use over a network, the license asks you to offer them its source
+code. The app links to its source in the header.

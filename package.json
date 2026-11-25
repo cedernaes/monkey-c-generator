@@ -1,8 +1,14 @@
 {
-  "name": "watch-shape-editor",
+  "name": "monkey-c-generator",
   "private": true,
   "version": "0.1.0",
   "description": "Draw shapes for Garmin Connect IQ watch faces and copy them as Monkey C drawing calls.",
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cedernaes/monkey-c-generator.git"
+  },
+  "homepage": "https://cedernaes.github.io/monkey-c-generator/",
   "type": "module",
   "scripts": {
     "dev": "vite",
