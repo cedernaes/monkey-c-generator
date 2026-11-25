@@ -1,4 +1,5 @@
 import { useEffect, useReducer, useState } from 'react'
+import type { PointerEvent as ReactPointerEvent } from 'react'
 import { CodePanel } from './components/CodePanel.tsx'
 import { EditorCanvas } from './components/EditorCanvas.tsx'
 import { PropertiesPanel } from './components/PropertiesPanel.tsx'
@@ -19,6 +20,13 @@ import { editorReducer, initEditor, nextShapeId, nextShapeName, reorderShape, re
 import { downloadText, loadImage } from './state/files.ts'
 import { loadDocument, loadSettings, saveDocument, saveSettings } from './state/storage.ts'
 import { hintFor, REF_EDIT_HINTS, toolForKey } from './tools.ts'
+
+/**
+ * Clicks here keep the selected shape selected: the canvas (which handles its
+ * own clicks), shape rows, controls, and panels marked data-keep-selection.
+ */
+const KEEPS_SELECTION =
+  'canvas, .row, button, input, select, textarea, a, label, summary, [role="radio"], [data-keep-selection]'
 
 const ARROWS: Record<string, Point> = {
   ArrowLeft: [-1, 0],
@@ -143,6 +151,13 @@ export default function App() {
     }
   }
 
+  /** Clicking an empty part of the page deselects, like clicking empty canvas. */
+  function onAppPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
+    if (selectedId === null || e.button !== 0) return
+    if (e.target instanceof Element && e.target.closest(KEEPS_SELECTION)) return
+    select(null)
+  }
+
   // Keyboard shortcuts. Re-subscribed on every render so they see the current state.
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -226,7 +241,7 @@ export default function App() {
   })
 
   return (
-    <div className="app">
+    <div className="app" onPointerDown={onAppPointerDown}>
       <TopBar
         screen={screen}
         onScreen={changeScreen}

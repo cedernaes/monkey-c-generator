@@ -71,7 +71,8 @@ export function PropertiesPanel({ shape, newColor, onNewColor, onChange, onCommi
   }
 
   return (
-    <section className="card" aria-labelledby="props-title">
+    // A stray click while editing a shape shouldn't deselect it.
+    <section className="card" aria-labelledby="props-title" data-keep-selection>
       <h2 id="props-title">{shapeTypeName(shape.type)}</h2>
       <div className="fields">
         <TextField wide label="Name" value={shape.name} onChange={(name) => onChange({ ...shape, name }, 'preview')} onCommit={onCommit} />

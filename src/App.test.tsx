@@ -79,6 +79,23 @@ describe('App', () => {
     expect(names().at(-1)).toBe('Frame outline')
   })
 
+  it('deselects when clicking an empty part of the page', async () => {
+    const pointerDown = (selector: string) => {
+      const target = container.querySelector(selector)
+      if (!target) throw new Error(`Nothing matches ${selector}`)
+      target.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 }))
+    }
+    const selected = () => container.querySelector('.row[aria-selected="true"] .name')?.textContent ?? null
+
+    await act(async () => row('Bell (example)').click())
+    // Clicks in the properties panel keep the shape selected...
+    await act(async () => pointerDown('#props-title'))
+    expect(selected()).toBe('Bell (example)')
+    // ...but an empty part of the page deselects it.
+    await act(async () => pointerDown('.status'))
+    expect(selected()).toBeNull()
+  })
+
   it('shows the properties of the shape you pick', async () => {
     await act(async () => row('Bell (example)').click())
     expect(container.textContent).toContain('Points, one "x, y" per line')

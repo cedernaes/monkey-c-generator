@@ -20,7 +20,8 @@ export function CodePanel({ shapes, selected, settings, onSettings }: Props) {
   const code = generateCode(list, { mode: settings.codeMode, colours: settings.colours, fnName: settings.fnName })
 
   return (
-    <section className="card" aria-labelledby="code-title">
+    // Selecting code to copy shouldn't deselect the shape it shows.
+    <section className="card" aria-labelledby="code-title" data-keep-selection>
       <h2 id="code-title">
         Monkey C
         <CopyButton text={code} />
