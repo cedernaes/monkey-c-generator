@@ -47,7 +47,7 @@ function drag(type: string, target: Element, clientY = 0) {
 
 describe('App', () => {
   it('opens with the example shapes and their code', () => {
-    expect(container.querySelector('h1')?.textContent).toBe('Watch Shape Editor')
+    expect(container.querySelector('h1')?.textContent).toBe('Monkey C generator')
     expect(container.querySelector('.privacy')?.textContent).toContain('Nothing you draw or load is sent to a server')
     expect(rows()).toHaveLength(9)
     expect(code()).toContain('dc.fillPolygon([')
