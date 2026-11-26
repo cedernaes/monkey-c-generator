@@ -33,7 +33,7 @@ export function TopBar(props: Props) {
   return (
     <header className="bar">
       <div className="title">
-        <h1>Watch Shape Editor</h1>
+        <h1>Monkey C generator</h1>
         <span className="sub">
           {screenLabel(screen)} design grid · 1 unit = 1 px ·{' '}
           <a href={SOURCE_URL} target="_blank" rel="noreferrer">
